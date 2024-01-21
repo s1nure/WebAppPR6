@@ -57,6 +57,29 @@ function disableActionButtons() {
 	)
 }
 
+
+function createButtonClickHandler(adventurer, button, maxClicks) {
+	let clickCount = 0
+
+	return function () {
+		if (clickCount < maxClicks) {
+			adventurer.inflictDamage(generateRandomHarm(20))
+			clickCount++
+
+			const remainingClicks = maxClicks - clickCount
+			const message = `Button ${button.id} clicked (${clickCount}/${maxClicks}). Remaining clicks: ${remainingClicks}`
+			logBattle(message)
+			console.log(message)
+
+			if (clickCount === maxClicks) {
+				button.disabled = true
+				const message = `Button ${button.id} disabled. Maximum clicks reached.`
+				logBattle(message)
+				console.log(message)
+			}
+		}
+	}
+}
 function commenceAdventure() {
 	console.log('Embarking on a new quest!')
 
@@ -76,11 +99,20 @@ function commenceAdventure() {
 		hero.inflictDamage(generateRandomHarm(20))
 		villain.inflictDamage(generateRandomHarm(20))
 	})
+	attackButton.addEventListener(
+		'click',
+		createButtonClickHandler(hero, attackButton, 4)
+	)
+	
 
 	const specialAttackButton = document.getElementById('btn-ls')
 	specialAttackButton.addEventListener('click', () => {
 		villain.inflictDamage(generateRandomHarm(30))
 	})
+	specialAttackButton.addEventListener(
+		'click',
+		createButtonClickHandler(villain, specialAttackButton, 3)
+	)
 
 	hero.displayVitality()
 	villain.displayVitality()
