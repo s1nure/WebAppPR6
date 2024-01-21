@@ -13,7 +13,7 @@ class Adventurer {
 
 		this.currentVitality = Math.max(this.currentVitality - damageAmount, 0)
 		this.displayVitality()
-
+		logBattle(`${this.identity} get damage amount ${damageAmount}`)
 		if (this.currentVitality === 0) {
 			alert(`${this.identity} has fallen in battle!`)
 			this.isAlive = false
@@ -33,6 +33,18 @@ class Adventurer {
 		this.showVitalityInfo()
 		this.displayLifeBar()
 	}
+}
+
+const logContainer = document.getElementById('logs-cont')
+const logs = document.getElementById('logs')
+function logBattle(message) {
+	if (logContainer.style.display == 'none') {
+		logContainer.style.display = 'block'
+	}
+
+	const logEntry = document.createElement('div')
+	logEntry.textContent = message
+	logs.prepend(logEntry)
 }
 
 function generateRandomHarm(maxValue) {
