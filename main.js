@@ -17,6 +17,7 @@ class Adventurer {
 		if (this.currentVitality === 0) {
 			alert(`${this.identity} has fallen in battle!`)
 			this.isAlive = false
+
 			disableActionButtons()
 		}
 	}
@@ -27,11 +28,25 @@ class Adventurer {
 
 	displayLifeBar() {
 		this.lifeBarElement.style.width = `${this.currentVitality}%`
-	}
 
+		if (this.currentVitality < 60 && this.currentVitality > 20) {
+			this.lifeBarElement.classList.add('low')
+		}
+		if (this.currentVitality < 20) {
+			this.lifeBarElement.classList.remove('low')
+			this.lifeBarElement.classList.add('critical')
+		} else {
+			this.lifeBarElement.classList.remove('low')
+			this.lifeBarElement.classList.remove('critical')
+		}
+	}
 	displayVitality() {
 		this.showVitalityInfo()
 		this.displayLifeBar()
+	}
+	heal() {
+		this.currentVitality = 100
+		this.displayVitality()
 	}
 }
 
@@ -57,65 +72,156 @@ function disableActionButtons() {
 	)
 }
 
+const spiteEnemy = document.getElementById('sprite-enemy')
+const nameEnemy = document.getElementById('name-enemy')
 
-function createButtonClickHandler(adventurer, button, maxClicks) {
-	let clickCount = 0
 
-	return function () {
-		if (clickCount < maxClicks) {
-			adventurer.inflictDamage(generateRandomHarm(20))
-			clickCount++
 
-			const remainingClicks = maxClicks - clickCount
-			const message = `Button ${button.id} clicked (${clickCount}/${maxClicks}). Remaining clicks: ${remainingClicks}`
-			logBattle(message)
-			console.log(message)
 
-			if (clickCount === maxClicks) {
-				button.disabled = true
-				const message = `Button ${button.id} disabled. Maximum clicks reached.`
-				logBattle(message)
-				console.log(message)
-			}
+class Game {
+	constructor() {
+		this.hero = null
+		this.villain = null
+		this.attackButton = document.getElementById('btn-kick')
+		this.specialAttackButton = document.getElementById('btn-ls')
+		this.clickCount = {
+			'btn-kick': 0,
+			'btn-ls': 0,
 		}
 	}
-}
-function commenceAdventure() {
-	console.log('Embarking on a new quest!')
 
-	const hero = new Adventurer(
-		'Pikachu',
-		'health-character',
-		'progressbar-character'
-	)
-	const villain = new Adventurer(
-		'Charmander',
-		'health-enemy',
-		'progressbar-enemy'
-	)
+	start() {
+		console.log('Embarking on a new quest!')
 
-	const attackButton = document.getElementById('btn-kick')
-	attackButton.addEventListener('click', () => {
-		hero.inflictDamage(generateRandomHarm(20))
-		villain.inflictDamage(generateRandomHarm(20))
-	})
-	attackButton.addEventListener(
-		'click',
-		createButtonClickHandler(hero, attackButton, 4)
-	)
+		this.hero = new Adventurer(
+			'Pikachu',
+			'health-character',
+			'progressbar-character'
+		)
+		this.villain = new Adventurer(
+			'Charmander',
+			'health-enemy',
+			'progressbar-enemy'
+		)
+
+		this.attackButton.addEventListener('click', () => {
+			this.handleButtonClick(this.attackButton, 4)
+			this.hero.inflictDamage(generateRandomHarm(20))
+			this.villain.inflictDamage(generateRandomHarm(30))
+			this.checkHealth()
+		})
+
+
+		this.specialAttackButton.addEventListener('click', () => {
+			this.handleButtonClick(this.specialAttackButton, 3)
+			this.villain.inflictDamage(generateRandomHarm(40))
+			this.checkHealth()
+		})
+		
+		this.hero.displayVitality()
+		this.villain.displayVitality()
+	}
+
+	checkHealth() {
+		if (this.villain.currentVitality == 0) {
+			logBattle('Villain was killed')
+			this.NextEnemy()
+		}
+		if (this.hero.currentVitality == 0) {
+			logBattle('Hero was killed')
+		}
+	}
+
+	handleButtonClick(button, maxClicks) {
+		this.clickCount[button.id]++
+		
+		const remainingClicks = maxClicks - this.clickCount[button.id]
+		const message = `Button ${button.id} clicked (${
+			this.clickCount[button.id]
+		}/${maxClicks}). Remaining clicks: ${remainingClicks}`
+		logBattle(message)
+		console.log(message)
+
+		if (this.clickCount[button.id] === maxClicks) {
+			button.disabled = true
+			const disableMessage = `Button ${button.id} disabled. Maximum clicks reached.`
+			logBattle(disableMessage)
+			console.log(disableMessage)
+		}
+	}
+
+	resetClickCount(button) {
+		this.clickCount[button.id] = 0
+		let resetMessage = 'Abilities have been updated'
+		logBattle(resetMessage)
+		console.log(resetMessage)
+
+		button.disabled = false
+	}
+	NextEnemy() {
+		let imgElement = document.getElementById('sprite-enemy')
+		let currentSrc = imgElement.src
+		let parts = currentSrc.split('/')
+		let lastPart = parts[parts.length - 1]
+		let fileParts = lastPart.split('.')
+		let number = parseInt(fileParts[0])
+
+		number++
+
+		let newNumber
+		if (number < 10) {
+			newNumber = ('00' + number).slice(-3)
+		}
+		if (number < 100 && number >= 10) {
+			newNumber = ('0' + number).slice(-3)
+		}
+		let newFileName = newNumber + '.png'
+		parts[parts.length - 1] = newFileName
+		let newSrc = parts.join('/')
+		imgElement.src = newSrc
+
+
+		nameEnemy.textContent = 'Unknown enemy'
+		this.villain.identity = 'Unknown enemy'
+		this.villain.isAlive = true
+		this.villain.heal()
+		this.hero.heal()
+		this.resetClickCount(this.attackButton, 4)
+		this.resetClickCount(this.specialAttackButton, 3)
 	
+	}
 
-	const specialAttackButton = document.getElementById('btn-ls')
-	specialAttackButton.addEventListener('click', () => {
-		villain.inflictDamage(generateRandomHarm(30))
-	})
-	specialAttackButton.addEventListener(
-		'click',
-		createButtonClickHandler(villain, specialAttackButton, 3)
-	)
+	reset() {
+		this.hero = new Adventurer(
+			'Pikachu',
+			'health-character',
+			'progressbar-character'
+		)
+		this.villain = new Adventurer(
+			'Charmander',
+			'health-enemy',
+			'progressbar-enemy'
+		)
+		nameEnemy.textContent = 'Charmander'
 
-	hero.displayVitality()
-	villain.displayVitality()
+		this.villain.heal()
+		this.hero.heal()
+		this.resetClickCount(this.attackButton, 4)
+		this.resetClickCount(this.specialAttackButton, 3)
+		let imgElement = document.getElementById('sprite-enemy')
+		imgElement.src =
+			'https://assets.pokemon.com/assets/cms2/img/pokedex/full/004.png'
+		logs.innerHTML = ''
+		logContainer.style.display = 'none'
+	}
 }
 
-document.addEventListener('DOMContentLoaded', commenceAdventure)
+const game = new Game()
+
+document.addEventListener('DOMContentLoaded', () => {
+	game.start()
+})
+const resetButton = document.getElementById('reset-button')
+resetButton.addEventListener('click', () => {
+	game.reset()
+})

@@ -609,3 +609,12 @@ h1 {
   background-color: rgba(0, 255, 0, 0.2);
   box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
 }
+.low{
+	background: yellow;
+}
+.critical{
+	background: red;
+}
+.button-reset{
+	margin-top: 200px;
+}
